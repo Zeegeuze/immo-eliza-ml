@@ -1,0 +1,47 @@
+# data science
+numpy
+pandas
+
+# Uncomment if you use sklearn
+scikit-learn
+
+# Install the correct TensorFlow version
+# Uncomment if you use TensorFlow
+tensorflow
+tf_keras
+TensorBoard
+
+# packaging
+pip
+setuptools
+twine
+wheel
+
+# python and debugging
+ipdb
+ipykernel
+python-dotenv
+
+# jupyter and data viz
+matplotlib
+seaborn
+jupyter-contrib-core
+jupyter-contrib-nbextensions
+jupyter-highlight-selected-word
+jupyter-latex-envs
+jupyter-nbextensions-configurator
+jupyter-resource-usage
+jupyter-server
+jupyter_client
+jupyter_core
+# jupyterlab
+jupyterlab
+jupyterlab-pygments
+jupyterlab-widgets
+# jupyterlab_server
+jupyter-server
+notebook
+notebook_shim
+
+statsmodels
+pmdarima
