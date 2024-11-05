@@ -13,9 +13,19 @@ The main notebook will only contain the runtrough: the code is divided into pyth
 
 We'll have a map for all data, but new and saved.
 
-We'll have a map for all preprocessing.
+We'll have a map for all notebooks, being preprocessing, model and predict.
 
-And we'll have a map for all the machine learning code.
+We'll have a map where we save our models and scalers.
+
+And we'll have a map for all the machine learning code, which is divided into a preprocessing, model and predict file.
 
 ## Project
 This project run for a week.
+
+## Result
+Train score is 83.24%
+Test Score is 73.88%
+---------------------------
+The mean absolute error of our model is 96255.765625.
+The R2 score of our model is 0.7387530565514333
+The mean squared error of our model is 45454159872.0
