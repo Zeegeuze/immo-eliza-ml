@@ -1,5 +1,9 @@
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder, OrdinalEncoder, MinMaxScaler
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from xgboost import XGBRegressor
+import joblib
 
 def import_df(valid=True):
     '''
@@ -12,7 +16,7 @@ def import_df(valid=True):
 
     return df
 
-def preprocess(df):
+def preprocess(df, load_scaler=False):
     '''
     Takes a df, will go through all needed preprocessing steps and return the cleaned df.
     '''
@@ -25,14 +29,75 @@ def preprocess(df):
     X, y = split_df(df)
 
     # Different encoders
-    X = encoding_df(X)
+    # X = encoding_df(X)
+    preprocessing_pipeline(df)
 
     # Normalising
-    X_final = pd.DataFrame(MinMaxScaler().fit_transform(X))
+    if load_scaler == False:
+        scaler = MinMaxScaler()
+        scaler.fit_transform(X)
+
+        scaler_filename = "../saved_models/scaler.save"
+        joblib.dump(scaler, scaler_filename)
+        X_final = pd.DataFrame(MinMaxScaler().fit_transform(X))
+        print(X_final)
+
+    else:
+        scaler_filename = "../saved_models/scaler.save"
+
+        scaler = joblib.load(scaler_filename)
+
+        X_final = scaler.transform(X)
+        print(X_final)
+        # X_final = pd.DataFrame(MinMaxScaler(scaler).fit_transform(X))
+
+    # print(X_final)
     X_final.columns = X.columns
 
 
     return X_final, y
+
+def preprocessing_pipeline(df):
+    one_hot_features = ['property_type', 'subproperty_type', 'region', 'province', 'heating_type']
+    one_hot_transformer = Pipeline(steps=[
+        ("hot", OneHotEncoder(handle_unknown='ignore'))
+    ])
+
+    state_building_feature = ['state_building']
+    state_builing_categories = ["AS_NEW", "JUST_RENOVATED", "GOOD", "TO_BE_DONE_UP", "TO_RENOVATE", "TO_RESTORE", "MISSING"]
+    state_building_transformer = Pipeline(steps=[
+        ("state", OrdinalEncoder(categories = [state_builing_categories]))
+    ])
+
+    kitchen_feature = ['equipped_kitchen']
+    kitchen_categories = ["USA_HYPER_EQUIPPED", "HYPER_EQUIPPED", "USA_SEMI_EQUIPPED", "SEMI_EQUIPPED", "USA_INSTALLED", "INSTALLED", "USA_UNINSTALLED", "NOT_INSTALLED", "MISSING"]
+    kitchen_transformer = Pipeline(steps=[
+        ("kitchen", OrdinalEncoder(categories = [kitchen_categories]))
+    ])
+
+    # Label encoding not necessary as scikit learn will do that internally
+    # label_features = ['zip_code', 'locality']
+    # label_transformer = Pipeline(steps=[
+    #     ("label", LabelEncoder())])
+
+    min_max_features = df.loc[:, df.columns != 'price']
+    min_max_transformer = Pipeline(steps=[
+        ("mm", MinMaxScaler(feature_range=(0, 1)))
+    ])
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("scale", min_max_transformer, min_max_features),
+            ("ohe", one_hot_transformer, one_hot_features),
+            ('sb', state_building_transformer, state_building_feature),
+            ('kit', kitchen_transformer, kitchen_feature)
+        ]
+    )
+
+    model_test = Pipeline(steps=[("preprocessor", preprocessor),
+                                ('model', XGBRegressor(max_depth=4, min_child_weight=2, n_estimators=160))])
+
+    return model_test
 
 def compress(df, **kwargs):
     """
@@ -108,6 +173,7 @@ def encoding_df(X):
     categories = ["USA_HYPER_EQUIPPED", "HYPER_EQUIPPED", "USA_SEMI_EQUIPPED", "SEMI_EQUIPPED", "USA_INSTALLED", "INSTALLED", "USA_UNINSTALLED", "NOT_INSTALLED", "MISSING"]
     X = ordinal(X, categories, "equipped_kitchen")
 
+    # Label encoding not necessary as scikit learn will do that internally
     # Label encoding zip_code and locality
     label_encoder = LabelEncoder()
 
@@ -137,9 +203,6 @@ def ordinal(X, categories, feature):
     # Instantiate the Ordinal Encoder
     # print(X[categories])
     ordinal_encoder = OrdinalEncoder(categories = [categories])
-
-    # ordinal_encoder = OrdinalEncoder(categories = [["AS_NEW", "JUST_RENOVATED", "GOOD", "TO_BE_DONE_UP", "TO_RENOVATE", "TO_RESTORE", "MISSING"]])
-
 
     # Fit it
     ordinal_encoder.fit(X[[feature]])
